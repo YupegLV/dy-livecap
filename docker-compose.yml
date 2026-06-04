@@ -1,0 +1,10 @@
+services:
+  douyin-zhibo:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./output:/app/output
+    command: python bot_main.py
+    restart: unless-stopped

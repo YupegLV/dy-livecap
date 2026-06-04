@@ -1,0 +1,8 @@
+openai>=1.0.0
+requests>=2.28.0
+websocket-client>=1.6.0
+betterproto>=1.2.5
+pyyaml>=6.0
+rich>=13.0.0
+qq-botpy>=1.2.0
+pydub>=0.25.1

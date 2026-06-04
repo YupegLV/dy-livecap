@@ -1,0 +1,25 @@
+# 抖音直播监控+LLM总结工具 配置文件
+# 所有 API 密钥和模型配置通过环境变量设置，见 .env 文件
+
+# 直播录制
+record:
+  format: mp4          # 录制格式 (mp4/ts)
+  audio_format: wav    # 音频格式（ASR用，建议wav）
+
+# ASR 配置
+asr:
+  provider: qwen       # qwen | xunfei
+  # 以下配置从环境变量读取：
+  #   DASHSCOPE_API_KEY, DASHSCOPE_BASE_URL, DASHSCOPE_ASR_MODEL
+
+# LLM 配置
+llm:
+  max_tokens: 8192
+  multimodal: true
+  # 以下配置从环境变量读取：
+  #   LLM_BASE_URL, LLM_API_KEY, LLM_MODEL
+
+# QQ Bot 配置
+qq:
+  # 以下配置从环境变量读取：
+  #   QQ_BOT_APPID, QQ_BOT_SECRET
