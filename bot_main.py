@@ -345,8 +345,22 @@ class BotApp:
             await self.qq_bot.send_text(user_openid, HELP_TEXT, msg_id)
 
         elif intent["action"] == "chat":
-            # 多轮对话：基于最近完成的任务上下文回答
-            task = self.task_manager.get_user_latest_completed_task(user_openid)
+            # 多轮对话：优先按用户指定的 task_id 查找，否则取最近完成的任务
+            task_id = intent.get("task_id")
+            if task_id:
+                task = self.task_manager.get_user_task(user_openid, task_id)
+                if not task:
+                    await self.qq_bot.send_text(
+                        user_openid, f"找不到任务 {task_id}，请确认任务ID是否正确。", msg_id
+                    )
+                    return
+                if task.status != TaskStatus.COMPLETED:
+                    await self.qq_bot.send_text(
+                        user_openid, f"任务 {task_id} 尚未完成，无法进行追问。", msg_id
+                    )
+                    return
+            else:
+                task = self.task_manager.get_user_latest_completed_task(user_openid)
             if not task:
                 await self.qq_bot.send_text(
                     user_openid,

@@ -77,6 +77,14 @@ class TaskManager:
         with self._lock:
             return self._tasks.get(task_id)
 
+    def get_user_task(self, user_openid: str, task_id: str) -> Task | None:
+        """获取用户的指定任务（验证任务归属）。"""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task and task.user_openid == user_openid:
+                return task
+            return None
+
     def get_user_tasks(self, user_openid: str) -> list[Task]:
         """获取用户的所有任务。"""
         with self._lock:

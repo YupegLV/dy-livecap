@@ -27,7 +27,7 @@ INTENT_SYSTEM_PROMPT = """你是一个直播监控助手的意图解析器。你
   "action": "record" | "recover" | "query" | "chat" | "help" | "unknown",
   "url": "链接地址（仅 v.douyin.com 或 douyin.com 链接）",
   "duration": 分钟数（整数，如果用户没指定则根据上下文推断）,
-  "task_id": "任务ID（格式为 YYYYMMDD_HHMMSS 的时间戳，仅 recover 时需要）",
+  "task_id": "任务ID（格式为 YYYYMMDD_HHMMSS 的时间戳，recover 或 chat 时如果用户指定了任务则需要）",
   "user_request": "用户对总结内容的特殊要求（如无则为空字符串）"
 }
 
@@ -42,7 +42,8 @@ INTENT_SYSTEM_PROMPT = """你是一个直播监控助手的意图解析器。你
 6. 如果没有链接但问关于用法的问题，action 为 "help"
 7. 如果完全无法理解，action 为 "unknown"
 8. url 字段只保留纯链接，去掉分享文本中的其他内容
-9. user_request 提取用户对总结的特殊要求，例如：
+9. 如果用户在追问时指定了某个任务（如"关于任务20260602_144803，讲了什么"），提取 task_id，action 为 "chat"
+10. user_request 提取用户对总结的特殊要求，例如：
    - "重点看讲了什么技术" → user_request: "重点总结技术相关内容"
    - "只要时间线和重点" → user_request: "只输出时间线和重点信息"
    - "关注价格和促销信息" → user_request: "关注价格、促销、优惠信息"
@@ -97,8 +98,10 @@ class LLMAgent:
             "讲了多久", "有没有提到", "关键帧", "截图", "画面",
         ]
         if any(kw in message for kw in chat_keywords):
+            task_id_match = re.search(r'(\d{8}_\d{6})', message)
+            task_id = task_id_match.group(1) if task_id_match else None
             return {"action": "chat", "url": None, "duration": None,
-                    "user_request": message}
+                    "task_id": task_id, "user_request": message}
 
         # 没有链接，判断是否求助
         if any(kw in message for kw in ["帮助", "怎么用", "使用方法", "help", "帮助我"]):
@@ -260,7 +263,7 @@ class LLMAgent:
                     json_match = re.search(r'\{[^}]+\}', reasoning, re.DOTALL)
                     if json_match:
                         result = json.loads(json_match.group())
-                        if result.get("action") not in ("record", "recover", "query", "help", "unknown"):
+                        if result.get("action") not in ("record", "recover", "query", "chat", "help", "unknown"):
                             result["action"] = "unknown"
                         return result
                 print(f"[LLM Agent] 返回为空")
@@ -270,7 +273,7 @@ class LLMAgent:
             if json_match:
                 result = json.loads(json_match.group())
                 # 验证 action
-                if result.get("action") not in ("record", "recover", "query", "help", "unknown"):
+                if result.get("action") not in ("record", "recover", "query", "chat", "help", "unknown"):
                     result["action"] = "unknown"
                 return result
         except Exception as e:
